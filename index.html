@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>李喆涵的工作台</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#004D98">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="工作台">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="favicon.png">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #004D98; --primary-dark: #003366; --primary-light: #E8F1FA;
+            --accent: #A50044; --accent-light: #FCE8EF; --gold: #EDBB00; --gold-light: #FFF6D9;
+            --bg: #F5F7FA; --card: #FFFFFF; --text: #1A1A2E; --text-secondary: #6C7293;
+            --border: #E0E6ED; --success: #27AE60; --warning: #F39C12; --danger: #A50044;
+            --sidebar-bg: #004D98; --sidebar-active: #EDBB00;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+        .app { display: flex; height: 100vh; }
+
+        /* 侧边栏 */
+        .sidebar { width: 240px; background: var(--sidebar-bg); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; transition: transform 0.3s; }
+        .sidebar-header { padding: 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .barca-stripes { display: flex; height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 14px; }
+        .barca-stripes .stripe { flex: 1; }
+        .barca-stripes .red { background: #A50044; }
+        .barca-stripes .blue { background: #004D98; }
+        .logo-area { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .logo-area .ball { font-size: 30px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+        .logo-area .number-10 { font-size: 28px; font-weight: 800; color: #EDBB00; text-shadow: 0 0 12px rgba(237,187,0,0.6); font-style: italic; letter-spacing: -1px; }
+        .sidebar-header h1 { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+        .sidebar-header p { font-size: 12px; color: rgba(255,255,255,0.6); }
+        .nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; cursor: pointer; color: rgba(255,255,255,0.7); transition: all 0.2s; font-size: 14px; border-left: 3px solid transparent; }
+        .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .nav-item.active { background: rgba(237,187,0,0.12); color: #fff; border-left-color: var(--sidebar-active); }
+        .nav-item .icon { width: 20px; text-align: center; font-size: 16px; }
+        .sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 12px; color: rgba(255,255,255,0.4); }
+        .notify-status { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+        .notify-dot { width: 8px; height: 8px; border-radius: 50%; background: #95a5a6; }
+        .notify-dot.active { background: var(--success); box-shadow: 0 0 6px var(--success); }
+
+        /* 主内容区 */
+        .main { flex: 1; overflow-y: auto; padding: 24px 32px; }
+        .main::before { content: ''; display: block; height: 4px; background: linear-gradient(90deg, #004D98 0%, #004D98 33%, #A50044 33%, #A50044 66%, #EDBB00 66%, #EDBB00 100%); border-radius: 2px; margin-bottom: 16px; flex-shrink: 0; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .page-title { font-size: 24px; font-weight: 600; }
+        .page-subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+        .btn { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-secondary { background: var(--primary-light); color: var(--primary); }
+        .btn-secondary:hover { background: #E0E5FF; }
+        .btn-danger { background: #FDECEB; color: var(--danger); }
+        .btn-success { background: #E8F8F0; color: var(--success); }
+        .btn-sm { padding: 4px 10px; font-size: 12px; }
+        .btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+        .btn-ghost:hover { background: var(--bg); }
+
+        .card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: var(--card); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        .stat-label { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+        .stat-value { font-size: 28px; font-weight: 700; color: var(--primary); }
+        .stat-sub { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+        /* 任务列表 */
+        .task-list { background: var(--card); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        .task-item { display: flex; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--border); gap: 12px; transition: background 0.2s; }
+        .task-item:last-child { border-bottom: none; }
+        .task-item:hover { background: #FAFBFC; }
+        .task-item.done { opacity: 0.6; }
+        .task-item.done .task-name { text-decoration: line-through; }
+        .task-check { width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+        .task-check.done { background: var(--success); border-color: var(--success); color: #fff; }
+        .task-content { flex: 1; min-width: 0; }
+        .task-name { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+        .task-meta { display: flex; gap: 12px; font-size: 12px; color: var(--text-secondary); flex-wrap: wrap; }
+        .task-actions { display: flex; gap: 6px; opacity: 0; transition: opacity 0.2s; }
+        .task-item:hover .task-actions { opacity: 1; }
+
+        .priority { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .priority-high { background: #FDECEB; color: var(--danger); }
+        .priority-medium { background: #FEF5E7; color: var(--warning); }
+        .priority-low { background: #E8F8F0; color: var(--success); }
+
+        /* 模态框 */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: var(--card); border-radius: 16px; padding: 24px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-title { font-size: 18px; font-weight: 600; }
+        .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-secondary); line-height: 1; }
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; transition: border-color 0.2s; }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--primary); }
+        .form-textarea { resize: vertical; min-height: 80px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
+        .empty { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
+        .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.3; }
+
+        /* 日历打卡 */
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 12px; }
+        .calendar-day { aspect-ratio: 1; border-radius: 8px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 13px; position: relative; }
+        .calendar-day.checked { background: var(--success); color: #fff; font-weight: 600; }
+        .calendar-day.today { border: 2px solid var(--primary); }
+        .calendar-day .word-count { font-size: 10px; position: absolute; bottom: 2px; }
+        .calendar-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }
+        .calendar-header div { text-align: center; font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+
+        /* 课程表 */
+        .week-selector { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .schedule-grid { display: grid; grid-template-columns: 80px repeat(7, 1fr); gap: 6px; }
+        .schedule-cell { padding: 10px; border-radius: 8px; background: var(--bg); min-height: 60px; font-size: 12px; }
+        .schedule-cell.time { background: transparent; text-align: center; font-weight: 600; color: var(--text-secondary); }
+        .schedule-cell.has-class { background: var(--primary-light); color: var(--primary); font-weight: 500; cursor: pointer; }
+        .schedule-header { text-align: center; font-weight: 600; padding: 8px; color: var(--text-secondary); }
+
+        /* 进度条 */
+        .progress-bar { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #EDBB00, #FFD933); border-radius: 4px; transition: width 0.3s; }
+
+        /* 读书卡片 */
+        .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        .book-card { background: var(--card); border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); position: relative; }
+        .book-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+        .book-author { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+        .book-rating { color: var(--warning); margin-bottom: 8px; }
+        .book-note { font-size: 13px; line-height: 1.5; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+        .book-actions { position: absolute; top: 12px; right: 12px; display: flex; gap: 4px; }
+
+        /* 开关 */
+        .switch { position: relative; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; border-radius: 24px; transition: 0.3s; }
+        .switch-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.3s; }
+        .switch input:checked + .switch-slider { background: var(--primary); }
+        .switch input:checked + .switch-slider:before { transform: translateX(20px); }
+
+        /* Toast */
+        .toast { position: fixed; top: 20px; right: 20px; background: var(--text); color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 14px; z-index: 2000; opacity: 0; transform: translateY(-10px); transition: all 0.3s; max-width: 320px; }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+
+        .menu-toggle { display: none; position: fixed; top: 16px; left: 16px; z-index: 100; background: var(--sidebar-bg); color: #fff; border: none; width: 40px; height: 40px; border-radius: 8px; font-size: 20px; cursor: pointer; }
+
+        @media (max-width: 768px) {
+            .menu-toggle { display: block; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 99; transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main { padding: 64px 16px 24px; }
+            .form-row { grid-template-columns: 1fr; }
+            .schedule-grid { font-size: 10px; }
+            .schedule-cell { min-height: 40px; padding: 4px; }
+            .page-title { font-size: 20px; }
+            .ai-bar { flex-direction: column; }
+        }
+
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .current-time { text-align: center; padding: 16px; background: var(--card); border-radius: 12px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        .current-time .time { font-size: 32px; font-weight: 700; color: var(--primary); }
+        .current-time .date { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+        /* AI 命令栏 */
+        .ai-bar { display: flex; gap: 8px; margin-bottom: 20px; background: var(--card); padding: 12px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); align-items: center; }
+        .ai-bar .ai-icon { font-size: 20px; flex-shrink: 0; }
+        .ai-input { flex: 1; border: none; outline: none; font-size: 14px; padding: 8px; background: transparent; font-family: inherit; }
+        .ai-hint { font-size: 11px; color: var(--text-secondary); margin-top: 6px; padding: 0 12px; }
+        .ai-suggestions { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 12px 8px; }
+        .ai-suggestion { background: var(--primary-light); color: var(--primary); padding: 3px 10px; border-radius: 12px; font-size: 11px; cursor: pointer; white-space: nowrap; }
+        .ai-suggestion:hover { background: #DDE3FF; }
+
+        /* 记账 */
+        .finance-record { display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid var(--border); gap: 12px; }
+        .finance-record:last-child { border-bottom: none; }
+        .finance-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .finance-icon.expense { background: #FDECEB; }
+        .finance-icon.income { background: #E8F8F0; }
+        .finance-info { flex: 1; min-width: 0; }
+        .finance-category { font-size: 14px; font-weight: 500; }
+        .finance-meta { font-size: 12px; color: var(--text-secondary); }
+        .finance-amount { font-size: 16px; font-weight: 600; }
+        .finance-amount.expense { color: var(--danger); }
+        .finance-amount.income { color: var(--success); }
+        .category-bar { display: flex; gap: 4px; margin-top: 8px; height: 8px; border-radius: 4px; overflow: hidden; }
+        .category-seg { height: 100%; }
+
+        /* 穿搭 */
+        .weather-card { background: linear-gradient(135deg, #004D98 0%, #A50044 100%); color: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .weather-temp { font-size: 40px; font-weight: 700; }
+        .weather-desc { font-size: 14px; opacity: 0.9; }
+        .outfit-result { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 16px; }
+        .outfit-item { text-align: center; }
+        .outfit-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; border: 2px solid var(--border); }
+        .outfit-item .outfit-label { font-size: 12px; margin-top: 6px; color: var(--text-secondary); }
+        .clothing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
+        .clothing-card { background: var(--card); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); position: relative; }
+        .clothing-card img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+        .clothing-info { padding: 8px; }
+        .clothing-name { font-size: 12px; font-weight: 500; }
+        .clothing-cat { font-size: 10px; color: var(--text-secondary); }
+        .clothing-delete { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 14px; }
+        .clothing-delete:hover { background: var(--danger); }
+
+        /* 论文 */
+        .paper-source { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .paper-source-card { background: var(--card); border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); cursor: pointer; transition: transform 0.2s; text-align: center; }
+        .paper-source-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .paper-source-icon { font-size: 32px; margin-bottom: 8px; }
+        .paper-source-name { font-size: 14px; font-weight: 600; }
+        .paper-source-desc { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+        .paper-tag { display: inline-block; padding: 4px 12px; background: var(--primary-light); color: var(--primary); border-radius: 16px; font-size: 12px; cursor: pointer; margin: 4px; }
+        .paper-tag:hover { background: #DDE3FF; }
+
+        .help-banner { background: linear-gradient(135deg, #004D98 0%, #A50044 100%); color: #fff; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+        .help-banner .help-icon { font-size: 24px; }
+        .help-banner .help-text { flex: 1; font-size: 13px; line-height: 1.5; }
+        .help-banner .help-close { background: rgba(255,255,255,0.2); border: none; color: #fff; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 14px; }
+
+        .setting-section { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        .setting-section h3 { font-size: 16px; margin-bottom: 16px; }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); gap: 12px; }
+        .setting-row:last-child { border-bottom: none; }
+        .setting-label { font-size: 14px; }
+        .setting-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    </style>
+</head>
+<body>
+    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+    <div class="app">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="barca-stripes"><div class="stripe red"></div><div class="stripe blue"></div><div class="stripe red"></div></div>
+                <div class="logo-area"><span class="ball">⚽</span><span class="number-10">10</span></div>
+                <h1>李喆涵的工作台</h1>
+                <p id="todayDate">加载中...</p>
+            </div>
+            <nav class="nav" id="nav">
+                <div class="nav-item active" data-page="today" onclick="switchPage('today')"><span class="icon">📋</span><span>今日计划</span></div>
+                <div class="nav-item" data-page="english" onclick="switchPage('english')"><span class="icon">📖</span><span>英语单词打卡</span></div>
+                <div class="nav-item" data-page="finance" onclick="switchPage('finance')"><span class="icon">💰</span><span>记账</span></div>
+                <div class="nav-item" data-page="outfit" onclick="switchPage('outfit')"><span class="icon">👔</span><span>每日穿搭</span></div>
+                <div class="nav-item" data-page="schedule" onclick="switchPage('schedule')"><span class="icon">📅</span><span>课程表</span></div>
+                <div class="nav-item" data-page="study" onclick="switchPage('study')"><span class="icon">🎯</span><span>学习计划</span></div>
+                <div class="nav-item" data-page="books" onclick="switchPage('books')"><span class="icon">📚</span><span>读书笔记</span></div>
+                <div class="nav-item" data-page="papers" onclick="switchPage('papers')"><span class="icon">📄</span><span>论文阅读</span></div>
+                <div class="nav-item" data-page="settings" onclick="switchPage('settings')"><span class="icon">⚙️</span><span>设置</span></div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="notify-status"><span class="notify-dot" id="notifyDot"></span><span id="notifyStatus">微信通知未连接</span></div>
+                <div>数据存储于本地浏览器</div>
+            </div>
+        </aside>
+
+        <main class="main">
+            <!-- AI 命令栏（全局） -->
+            <div class="ai-bar">
+                <span class="ai-icon">🤖</span>
+                <input type="text" class="ai-input" id="aiInput" placeholder="输入命令或搜索... 例如：添加任务 明天复习高数 / 打卡50个 / 支出20午饭 / 搜索Vue3" onkeydown="if(event.key==='Enter')executeAI()">
+                <button class="btn btn-primary btn-sm" onclick="executeAI()">执行</button>
+            </div>
+            <div class="ai-suggestions">
+                <span class="ai-suggestion" onclick="document.getElementById('aiInput').value='添加任务 ';document.getElementById('aiInput').focus()">📌 添加任务</span>
+                <span class="ai-suggestion" onclick="document.getElementById('aiInput').value='打卡 50';executeAI()">📖 打卡50词</span>
+                <span class="ai-suggestion" onclick="document.getElementById('aiInput').value='支出 20 午饭';executeAI()">💰 记一笔支出</span>
+                <span class="ai-suggestion" onclick="document.getElementById('aiInput').value='穿搭';executeAI()">👔 今日穿搭</span>
+                <span class="ai-suggestion" onclick="document.getElementById('aiInput').value='论文 React';executeAI()">📄 搜论文</span>
+                <span class="ai-suggestion" onclick="document.getElementById('aiInput').value='搜索 ';document.getElementById('aiInput').focus()">🔍 AI搜索</span>
+            </div>
+
+            <!-- 今日计划 -->
+            <div class="page active" id="page-today">
+                <div class="page-header">
+                    <div><div class="page-title">今日计划</div><div class="page-subtitle" id="todaySubtitle"></div></div>
+                    <button class="btn btn-primary" onclick="openTaskModal()">+ 添加任务</button>
+                </div>
+                <div class="current-time"><div class="time" id="currentTime">--:--</div><div class="date" id="currentDateText"></div></div>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-label">今日任务</div><div class="stat-value" id="statTotal">0</div></div>
+                    <div class="stat-card"><div class="stat-label">已完成</div><div class="stat-value" id="statDone" style="color:var(--success)">0</div></div>
+                    <div class="stat-card"><div class="stat-label">待完成</div><div class="stat-value" id="statPending" style="color:var(--warning)">0</div></div>
+                    <div class="stat-card"><div class="stat-label">完成率</div><div class="stat-value" id="statRate">0%</div></div>
+                </div>
+                <div id="taskListContainer"></div>
+            </div>
+
+            <!-- 英语单词打卡 -->
+            <div class="page" id="page-english">
+                <div class="page-header">
+                    <div><div class="page-title">英语单词打卡</div><div class="page-subtitle">坚持每日背诵，积少成多</div></div>
+                    <button class="btn btn-primary" onclick="openWordModal()">+ 今日打卡</button>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-label">连续打卡</div><div class="stat-value" id="wordStreak">0</div><div class="stat-sub">天</div></div>
+                    <div class="stat-card"><div class="stat-label">累计单词</div><div class="stat-value" id="wordTotal">0</div><div class="stat-sub">个</div></div>
+                    <div class="stat-card"><div class="stat-label">本月打卡</div><div class="stat-value" id="wordMonth">0</div><div class="stat-sub">天</div></div>
+                    <div class="stat-card"><div class="stat-label">日均单词</div><div class="stat-value" id="wordAvg">0</div><div class="stat-sub">个/天</div></div>
+                </div>
+                <div class="card"><h3 style="margin-bottom:8px">本月打卡日历</h3><p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px">绿色表示已打卡，数字为当天背诵单词量</p>
+                    <div class="calendar-header"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
+                    <div class="calendar" id="wordCalendar"></div>
+                </div>
+                <div class="card"><h3 style="margin-bottom:12px">打卡记录</h3><div id="wordRecords"></div></div>
+            </div>
+
+            <!-- 记账 -->
+            <div class="page" id="page-finance">
+                <div class="page-header">
+                    <div><div class="page-title">记账</div><div class="page-subtitle">记录每日收支，支持微信账单导入</div></div>
+                    <div style="display:flex;gap:8px">
+                        <button class="btn btn-secondary" onclick="document.getElementById('wechatBillInput').click()">📥 导入微信账单</button>
+                        <input type="file" id="wechatBillInput" accept=".csv" style="display:none" onchange="importWechatBill(event)">
+                        <button class="btn btn-primary" onclick="openFinanceModal()">+ 记一笔</button>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-label">本月支出</div><div class="stat-value" id="finExpense" style="color:var(--danger)">¥0</div></div>
+                    <div class="stat-card"><div class="stat-label">本月收入</div><div class="stat-value" id="finIncome" style="color:var(--success)">¥0</div></div>
+                    <div class="stat-card"><div class="stat-label">本月结余</div><div class="stat-value" id="finBalance">¥0</div></div>
+                    <div class="stat-card"><div class="stat-label">日均支出</div><div class="stat-value" id="finDaily">¥0</div></div>
+                </div>
+                <div class="card" id="financeCategoryCard">
+                    <h3 style="margin-bottom:12px">支出分类</h3>
+                    <div id="financeCategoryChart"></div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom:12px">收支记录</h3>
+                    <div id="financeRecords"></div>
+                </div>
+            </div>
+
+            <!-- 每日穿搭 -->
+            <div class="page" id="page-outfit">
+                <div class="page-header">
+                    <div><div class="page-title">每日穿搭</div><div class="page-subtitle">根据天气智能搭配，每天不重样</div></div>
+                    <div style="display:flex;gap:8px">
+                        <button class="btn btn-secondary" onclick="openClothingModal()">+ 添加衣物</button>
+                        <button class="btn btn-primary" onclick="generateOutfit()">🔀 生成今日穿搭</button>
+                    </div>
+                </div>
+                <div class="weather-card" id="weatherCard">
+                    <div><div class="weather-temp" id="weatherTemp">--°</div><div class="weather-desc" id="weatherDesc">正在获取天气...</div></div>
+                    <div style="text-align:right"><div id="weatherCity" style="font-size:14px;opacity:0.9">--</div><div id="weatherHint" style="font-size:12px;opacity:0.8;margin-top:4px"></div></div>
+                </div>
+                <div class="card" id="outfitResultCard" style="display:none">
+                    <h3 style="margin-bottom:8px">👔 今日推荐穿搭</h3>
+                    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px" id="outfitReason"></p>
+                    <div class="outfit-result" id="outfitResult"></div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom:12px">我的衣橱</h3>
+                    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+                        <span class="paper-tag" onclick="filterClothing('all')" id="catFilter-all" style="background:var(--primary);color:#fff">全部</span>
+                        <span class="paper-tag" onclick="filterClothing('top')">上衣</span>
+                        <span class="paper-tag" onclick="filterClothing('outer')">外套</span>
+                        <span class="paper-tag" onclick="filterClothing('bottom')">裤子</span>
+                        <span class="paper-tag" onclick="filterClothing('shoes')">鞋子</span>
+                        <span class="paper-tag" onclick="filterClothing('accessory')">配饰</span>
+                    </div>
+                    <div class="clothing-grid" id="clothingGrid"></div>
+                </div>
+            </div>
+
+            <!-- 课程表 -->
+            <div class="page" id="page-schedule">
+                <div class="page-header">
+                    <div><div class="page-title">课程表</div><div class="page-subtitle">支持每周不同课表，可导入</div></div>
+                    <div style="display:flex;gap:8px">
+                        <button class="btn btn-secondary" onclick="document.getElementById('scheduleImportInput').click()">📥 导入课表</button>
+                        <input type="file" id="scheduleImportInput" accept=".csv" style="display:none" onchange="importSchedule(event)">
+                        <button class="btn btn-primary" onclick="openClassModal()">+ 添加课程</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="week-selector">
+                        <span style="font-size:14px;font-weight:500">第</span>
+                        <select class="form-select" id="weekSelect" onchange="renderSchedule()" style="width:80px;padding:6px"></select>
+                        <span style="font-size:14px;font-weight:500">周课表</span>
+                        <span style="font-size:12px;color:var(--text-secondary);margin-left:8px" id="weekInfo"></span>
+                    </div>
+                    <div class="schedule-grid" id="scheduleGrid"></div>
+                </div>
+                <div class="card" style="font-size:13px;color:var(--text-secondary);line-height:1.8">
+                    <strong>导入说明：</strong>CSV文件格式：周次,星期(1-7),节次(1-5),课程名,地点,教师<br>
+                    每行一条记录。例如：1,1,1,高等数学,教学楼A301,王老师<br>
+                    可在 Excel 中编辑后另存为 CSV 导入。不同周次可以有不同课表。
+                </div>
+            </div>
+
+            <!-- 学习计划 -->
+            <div class="page" id="page-study">
+                <div class="page-header">
+                    <div><div class="page-title">学习计划</div><div class="page-subtitle">长期目标和进度追踪</div></div>
+                    <button class="btn btn-primary" onclick="openStudyModal()">+ 新建计划</button>
+                </div>
+                <div id="studyContainer"></div>
+            </div>
+
+            <!-- 读书笔记 -->
+            <div class="page" id="page-books">
+                <div class="page-header">
+                    <div><div class="page-title">读书笔记</div><div class="page-subtitle">记录读过的书和心得</div></div>
+                    <button class="btn btn-primary" onclick="openBookModal()">+ 添加书籍</button>
+                </div>
+                <div class="book-grid" id="bookContainer"></div>
+            </div>
+
+            <!-- 论文阅读 -->
+            <div class="page" id="page-papers">
+                <div class="page-header">
+                    <div><div class="page-title">论文阅读</div><div class="page-subtitle">搜索前端相关论文和学术资源</div></div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom:12px">🔍 搜索论文</h3>
+                    <div style="display:flex;gap:8px;margin-bottom:16px">
+                        <input type="text" class="form-input" id="paperSearchInput" placeholder="输入关键词，如 React、Vue、WebAssembly、CSS..." onkeydown="if(event.key==='Enter')searchPapers()">
+                        <button class="btn btn-primary" onclick="searchPapers()">搜索</button>
+                    </div>
+                    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">热门前端论文关键词：</p>
+                    <div id="paperTags"></div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom:12px">📚 论文搜索源</h3>
+                    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">点击下方任一来源，将使用你的关键词在该平台搜索论文</p>
+                    <div class="paper-source" id="paperSources"></div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom:12px">📖 推荐前端论文方向</h3>
+                    <div id="paperTopics"></div>
+                </div>
+            </div>
+
+            <!-- 设置 -->
+            <div class="page" id="page-settings">
+                <div class="page-header"><div><div class="page-title">设置</div><div class="page-subtitle">配置微信通知和数据管理</div></div></div>
+                <div class="setting-section">
+                    <h3>🔔 微信通知（Server酱）</h3>
+                    <div class="form-group"><label class="form-label">SendKey</label><input type="text" class="form-input" id="sendKeyInput" placeholder="在 sct.ftqq.com 注册获取"></div>
+                    <div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="saveSendKey()">保存</button><button class="btn btn-secondary btn-sm" onclick="testNotify()">发送测试消息</button></div>
+                </div>
+                <div class="setting-section">
+                    <h3>👔 穿搭设置</h3>
+                    <div class="setting-row"><div><div class="setting-label">所在城市</div><div class="setting-desc">用于获取天气，自动搭配衣物</div></div></div>
+                    <div class="form-group" style="margin-top:8px"><input type="text" class="form-input" id="cityInput" placeholder="例如：北京"></div>
+                    <button class="btn btn-primary btn-sm" onclick="saveCity()">保存城市</button>
+                </div>
+                <div class="setting-section">
+                    <h3>⏰ 通知提醒</h3>
+                    <div class="setting-row"><div><div class="setting-label">任务开始前提醒</div><div class="setting-desc">在任务开始前5分钟推送微信提醒</div></div><label class="switch"><input type="checkbox" id="settingTaskRemind" onchange="saveSettings()"><span class="switch-slider"></span></label></div>
+                    <div class="setting-row"><div><div class="setting-label">每日打卡提醒</div><div class="setting-desc">每天晚上提醒完成单词打卡</div></div><label class="switch"><input type="checkbox" id="settingWordRemind" onchange="saveSettings()"><span class="switch-slider"></span></label></div>
+                </div>
+                <div class="setting-section">
+                    <h3>💾 数据管理</h3>
+                    <div class="setting-row"><div><div class="setting-label">导出数据</div><div class="setting-desc">备份所有数据到文件</div></div><button class="btn btn-ghost btn-sm" onclick="exportData()">导出</button></div>
+                    <div class="setting-row"><div><div class="setting-label">导入数据</div><div class="setting-desc">从备份文件恢复数据</div></div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('importFile').click()">导入</button><input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)"></div>
+                    <div class="setting-row"><div><div class="setting-label" style="color:var(--danger)">清空所有数据</div><div class="setting-desc">不可恢复</div></div><button class="btn btn-danger btn-sm" onclick="clearAllData()">清空</button></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 任务模态框 -->
+    <div class="modal-overlay" id="taskModal"><div class="modal"><div class="modal-header"><div class="modal-title" id="taskModalTitle">添加任务</div><button class="modal-close" onclick="closeModal('taskModal')">×</button></div>
+        <input type="hidden" id="taskId">
+        <div class="form-group"><label class="form-label">任务名称 *</label><input type="text" class="form-input" id="taskName" placeholder="例如：复习高数第三章"></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">开始时间</label><input type="datetime-local" class="form-input" id="taskStart"></div><div class="form-group"><label class="form-label">结束时间</label><input type="datetime-local" class="form-input" id="taskEnd"></div></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">优先级</label><select class="form-select" id="taskPriority"><option value="high">高 - 紧急重要</option><option value="medium" selected>中 - 一般</option><option value="low">低 - 不急</option></select></div><div class="form-group"><label class="form-label">分类</label><select class="form-select" id="taskCategory"><option value="学习">学习</option><option value="课程">课程</option><option value="生活">生活</option><option value="社交">社交</option><option value="其他">其他</option></select></div></div>
+        <div class="form-group"><label class="form-label">备注</label><textarea class="form-textarea" id="taskNote" placeholder="可选"></textarea></div>
+        <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('taskModal')">取消</button><button class="btn btn-primary" onclick="saveTask()">保存</button></div>
+    </div></div>
+
+    <!-- 单词打卡模态框 -->
+    <div class="modal-overlay" id="wordModal"><div class="modal"><div class="modal-header"><div class="modal-title">英语单词打卡</div><button class="modal-close" onclick="closeModal('wordModal')">×</button></div>
+        <div class="form-group"><label class="form-label">日期</label><input type="date" class="form-input" id="wordDate"></div>
+        <div class="form-group"><label class="form-label">背诵单词量 *</label><input type="number" class="form-input" id="wordCount" placeholder="例如：50" min="1"></div>
+        <div class="form-group"><label class="form-label">学习内容（可选）</label><input type="text" class="form-input" id="wordContent" placeholder="例如：四级核心词汇 List 5"></div>
+        <div class="form-group"><label class="form-label">备注（可选）</label><textarea class="form-textarea" id="wordNote"></textarea></div>
+        <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('wordModal')">取消</button><button class="btn btn-primary" onclick="saveWord()">打卡</button></div>
+    </div></div>
+
+    <!-- 记账模态框 -->
+    <div class="modal-overlay" id="financeModal"><div class="modal"><div class="modal-header"><div class="modal-title" id="financeModalTitle">记一笔</div><button class="modal-close" onclick="closeModal('financeModal')">×</button></div>
+        <input type="hidden" id="financeId">
+        <div class="form-group"><label class="form-label">类型</label><div style="display:flex;gap:8px"><button class="btn btn-danger" id="finTypeBtnExpense" onclick="setFinType('expense')" style="flex:1">支出</button><button class="btn btn-ghost" id="finTypeBtnIncome" onclick="setFinType('income')" style="flex:1">收入</button></div></div>
+        <div class="form-group"><label class="form-label">金额 *</label><input type="number" class="form-input" id="financeAmount" placeholder="0.00" step="0.01"></div>
+        <div class="form-row"><div class="form-group"><label class="form-label" id="finCategoryLabel">支出分类</label><select class="form-select" id="financeCategory"><option>餐饮</option><option>交通</option><option>购物</option><option>娱乐</option><option>学习</option><option>生活用品</option><option>通讯</option><option>医疗</option><option>其他</option></select></div><div class="form-group"><label class="form-label">来源/方式</label><input type="text" class="form-input" id="financeSource" placeholder="如：微信/支付宝/现金"></div></div>
+        <div class="form-group"><label class="form-label">日期</label><input type="date" class="form-input" id="financeDate"></div>
+        <div class="form-group"><label class="form-label">备注</label><input type="text" class="form-input" id="financeNote" placeholder="可选"></div>
+        <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('financeModal')">取消</button><button class="btn btn-primary" onclick="saveFinance()">保存</button></div>
+    </div></div>
+
+    <!-- 衣物模态框 -->
+    <div class="modal-overlay" id="clothingModal"><div class="modal"><div class="modal-header"><div class="modal-title">添加衣物</div><button class="modal-close" onclick="closeModal('clothingModal')">×</button></div>
+        <input type="hidden" id="clothingId">
+        <div class="form-group"><label class="form-label">衣物图片</label><input type="file" class="form-input" id="clothingImage" accept="image/*" onchange="previewClothing(event)"></div>
+        <div id="clothingPreview" style="text-align:center;margin-bottom:12px;display:none"><img id="clothingPreviewImg" style="max-width:150px;max-height:150px;border-radius:8px"></div>
+        <div class="form-group"><label class="form-label">名称 *</label><input type="text" class="form-input" id="clothingName" placeholder="如：白色T恤"></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">分类</label><select class="form-select" id="clothingCategory"><option value="top">上衣</option><option value="outer">外套</option><option value="bottom">裤子</option><option value="shoes">鞋子</option><option value="accessory">配饰</option></select></div><div class="form-group"><label class="form-label">适合温度</label><select class="form-select" id="clothingTemp"><option value="hot">炎热 (>25°C)</option><option value="warm">温暖 (15-25°C)</option><option value="cool">凉爽 (10-15°C)</option><option value="cold">寒冷 (0-10°C)</option><option value="verycold">严寒 (<0°C)</option><option value="all">通用</option></select></div></div>
+        <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('clothingModal')">取消</button><button class="btn btn-primary" onclick="saveClothing()">保存</button></div>
+    </div></div>
+
+    <!-- 课程模态框 -->
+    <div class="modal-overlay" id="classModal"><div class="modal"><div class="modal-header"><div class="modal-title" id="classModalTitle">添加课程</div><button class="modal-close" onclick="closeModal('classModal')">×</button></div>
+        <input type="hidden" id="classId">
+        <div class="form-group"><label class="form-label">课程名称 *</label><input type="text" class="form-input" id="className" placeholder="例如：高等数学"></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">周次</label><input type="number" class="form-input" id="classWeek" value="1" min="1" max="30"></div><div class="form-group"><label class="form-label">星期</label><select class="form-select" id="classDay"><option value="1">周一</option><option value="2">周二</option><option value="3">周三</option><option value="4">周四</option><option value="5">周五</option><option value="6">周六</option><option value="7">周日</option></select></div></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">节次</label><select class="form-select" id="classPeriod"><option value="1">第1节 (08:00-09:40)</option><option value="2">第2节 (10:00-11:40)</option><option value="3">第3节 (14:00-15:40)</option><option value="4">第4节 (16:00-17:40)</option><option value="5">第5节 (19:00-20:40)</option></select></div><div class="form-group"><label class="form-label">地点</label><input type="text" class="form-input" id="classLocation" placeholder="如：A301"></div></div>
+        <div class="form-group"><label class="form-label">教师</label><input type="text" class="form-input" id="classTeacher" placeholder="如：王老师"></div>
+        <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('classModal')">取消</button><button class="btn btn-primary" onclick="saveClass()">保存</button></div>
+    </div></div>
+
+    <!-- 学习计划模态框 -->
+    <div class="modal-overlay" id="studyModal"><div class="modal"><div class="modal-header"><div class="modal-title" id="studyModalTitle">新建学习计划</div><button class="modal-close" onclick="closeModal('studyModal')">×</button></div>
+        <input type="hidden" id="studyId">
+        <div class="form-group"><label class="form-label">目标名称 *</label><input type="text" class="form-input" id="studyName" placeholder="例如：通过英语六级"></div>
+        <div class="form-group"><label class="form-label">描述</label><textarea class="form-textarea" id="studyDesc"></textarea></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">截止日期</label><input type="date" class="form-input" id="studyDeadline"></div><div class="form-group"><label class="form-label">当前进度 (%)</label><input type="number" class="form-input" id="studyProgress" min="0" max="100" value="0"></div></div>
+        <div class="form-group"><label class="form-label">状态</label><select class="form-select" id="studyStatus"><option value="进行中">进行中</option><option value="已完成">已完成</option><option value="已暂停">已暂停</option></select></div>
+        <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('studyModal')">取消</button><button class="btn btn-primary" onclick="saveStudy()">保存</button></div>
+    </div></div>
+
+    <!-- 读书模态框 -->
+    <div class="modal-overlay" id="bookModal"><div class="modal"><div class="modal-header"><div class="modal-title" id="bookModalTitle">添加书籍</div><button class="modal-close" onclick="closeModal('bookModal')">×</button></div>
+        <input type="hidden" id="bookId">
+        <div class="form-group"><label class="form-label">书名 *</label><input type="text" class="form-input" id="bookTitle"></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">作者</label><input type="text" class="form-input" id="bookAuthor"></div><div class="form-group"><label class="form-label">评分</label><select class="form-select" id="bookRating"><option value="5">★★★★★</option><option value="4">★★★★</option><option value="3">★★★</option><option value="2">★★</option><option value="1">★</option><option value="0">未评分</option></select></div></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">开始日期</label><input type="date" class="form-input" id="bookStart"></div><div class="form-group"><label class="form-label">完成日期</label><input type="date" class="form-input" id="bookFinish"></div></div>
+        <div class="form-group"><label class="form-label">读书心得</label><textarea class="form-textarea" id="bookNote" style="min-height:100px"></textarea></div>
+        <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('bookModal')">取消</button><button class="btn btn-primary" onclick="saveBook()">保存</button></div>
+    </div></div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ========== 数据管理 ==========
+        const DB = {
+            get(key, def = []) { try { const v = localStorage.getItem('lzh_wb_' + key); return v ? JSON.parse(v) : def; } catch { return def; } },
+            set(key, val) { localStorage.setItem('lzh_wb_' + key, JSON.stringify(val)); }
+        };
+
+        let settings = DB.get('settings', { sendKey: '', city: '', taskRemind: true, wordRemind: true });
+        let currentFinType = 'expense';
+        let clothingFilter = 'all';
+        let currentWeek = 1;
+
+        // ========== 工具函数 ==========
+        function showToast(msg, type = '') { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast show ' + type; setTimeout(() => t.className = 'toast ' + type, 3000); }
+        function formatDate(d) { const dt = new Date(d); return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0'); }
+        function formatDateTime(d) { const dt = new Date(d); return formatDate(d) + 'T' + String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0'); }
+        function todayStr() { return formatDate(new Date()); }
+        function uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2,5); }
+        function priorityLabel(p) { return {high:'高',medium:'中',low:'低'}[p] || '中'; }
+        function priorityClass(p) { return 'priority-' + (p || 'medium'); }
+        function formatTimeShort(dt) { if(!dt) return ''; const d = new Date(dt); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+        function escapeHtml(s) { if(!s) return ''; return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+        // ========== 页面切换 ==========
+        function switchPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active');
+            document.querySelector(`.nav-item[data-page="${page}"]`).classList.add('active');
+            const renderMap = { today: renderTasks, english: renderWords, finance: renderFinance, outfit: () => { renderClothing(); loadWeather(); }, schedule: renderSchedule, study: renderStudy, books: renderBooks, papers: renderPapers, settings: renderSettings };
+            if (renderMap[page]) renderMap[page]();
+            if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+        }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        // ========== AI 智能命令 ==========
+        function executeAI() {
+            const input = document.getElementById('aiInput').value.trim();
+            if (!input) return;
+            const result = parseAICommand(input);
+
+            switch(result.type) {
+                case 'task':
+                    if (result.content) { addTaskQuick(result.content); } else { showToast('请输入任务内容', 'error'); }
+                    break;
+                case 'word':
+                    addWordQuick(result.count);
+                    break;
+                case 'expense':
+                    addFinanceQuick('expense', result.amount, result.category);
+                    break;
+                case 'income':
+                    addFinanceQuick('income', result.amount, result.source);
+                    break;
+                case 'paper':
+                    switchPage('papers');
+                    document.getElementById('paperSearchInput').value = result.query;
+                    searchPapers();
+                    break;
+                case 'outfit':
+                    switchPage('outfit');
+                    setTimeout(() => generateOutfit(), 500);
+                    break;
+                case 'search':
+                    window.open('https://metaso.cn/?q=' + encodeURIComponent(result.query), '_blank');
+                    showToast('正在用 AI 搜索：' + result.query);
+                    break;
+            }
+            document.getElementById('aiInput').value = '';
+        }
+
+        function parseAICommand(text) {
+            // 添加任务
+            if (/^(添加|新建|创建|安排|提醒我)/.test(text) && /(任务|计划|提醒|复习|写|做|完成|预习|背|看|学|开会|交|去)/.test(text)) {
+                let name = text.replace(/^(添加任务|新建任务|创建任务|安排任务|添加计划|新建|添加|创建|安排|提醒我)/, '').trim();
+                return { type: 'task', content: name };
+            }
+            // 单词打卡
+            let m = text.match(/(?:打卡|背了?|记忆|复习).*(\d+)\s*个?/) || text.match(/(\d+)\s*个?\s*(?:单词|词)/);
+            if (m) return { type: 'word', count: parseInt(m[1]) };
+
+            // 支出
+            m = text.match(/(?:支出|花了?|花费|消费|买|付).*(\d+(?:\.\d+)?)/) || text.match(/(\d+(?:\.\d+)?)\s*元?.*(?:支出|花了?|消费)/);
+            if (m) {
+                const amount = parseFloat(m[1]);
+                let cat = text.replace(/(\d+(?:\.\d+)?)/, '').replace(/^(支出|花了?|花费|消费|买|付|元)/g, '').trim();
+                if (!cat) cat = '其他';
+                return { type: 'expense', amount, category: cat };
+            }
+            // 收入
+            m = text.match(/(?:收入|收到|进账|工资|奖学金).*(\d+(?:\.\d+)?)/) || text.match(/(\d+(?:\.\d+)?)\s*元?\s*(?:收入|收到|进账)/);
+            if (m) {
+                const amount = parseFloat(m[1]);
+                let src = text.replace(/(\d+(?:\.\d+)?)/, '').replace(/^(收入|收到|进账|工资|奖学金|元)/g, '').trim();
+                if (!src) src = '其他';
+                return { type: 'income', amount, source: src };
+            }
+            // 论文
+            if (/^(论文|paper|搜索论文|搜论文|找论文)/.test(text)) {
+                return { type: 'paper', query: text.replace(/^(论文|paper|搜索论文|搜论文|找论文)/, '').trim() || '前端' };
+            }
+            // 穿搭
+            if (/(穿搭|穿什么|今天穿|搭配)/.test(text)) return { type: 'outfit' };
+            // 搜索
+            if (/^(搜索|搜一下|查一下|查询|search)/.test(text)) {
+                return { type: 'search', query: text.replace(/^(搜索|搜一下|查一下|查询|search)/, '').trim() };
+            }
+            // 默认搜索
+            return { type: 'search', query: text };
+        }
+
+        function addTaskQuick(name) {
+            const tasks = DB.get('tasks');
+            const now = new Date(); now.setMinutes(0,0,0); now.setHours(now.getHours()+1);
+            tasks.push({ id: uid(), name, start: formatDateTime(now), end: '', priority: 'medium', category: '其他', note: 'AI命令创建', done: false, createdAt: new Date().toISOString() });
+            DB.set('tasks', tasks);
+            showToast('已添加任务：' + name, 'success');
+            if (document.getElementById('page-today').classList.contains('active')) renderTasks();
+        }
+        function addWordQuick(count) {
+            const records = DB.get('wordRecords');
+            const date = todayStr();
+            const idx = records.findIndex(r => r.date === date);
+            const data = { date, count, content: '', note: 'AI命令打卡', createdAt: new Date().toISOString() };
+            if (idx >= 0) records[idx] = data; else records.push(data);
+            DB.set('wordRecords', records);
+            showToast('打卡成功！今日 ' + count + ' 个单词', 'success');
+            if (document.getElementById('page-english').classList.contains('active')) renderWords();
+        }
+        function addFinanceQuick(type, amount, category) {
+            const records = DB.get('finances');
+            records.push({ id: uid(), type, amount, category: category || '其他', source: '微信', date: todayStr(), note: 'AI命令记录', createdAt: new Date().toISOString() });
+            DB.set('finances', records);
+            showToast('已记录' + (type==='expense'?'支出':'收入') + '：¥' + amount, 'success');
+            if (document.getElementById('page-finance').classList.contains('active')) renderFinance();
+        }
+
+        // ========== 今日计划 ==========
+        function openTaskModal(id) {
+            document.getElementById('taskModalTitle').textContent = id ? '编辑任务' : '添加任务';
+            document.getElementById('taskId').value = id || '';
+            const tasks = DB.get('tasks');
+            if (id) { const t = tasks.find(x=>x.id===id); if(t){ document.getElementById('taskName').value=t.name; document.getElementById('taskStart').value=t.start||''; document.getElementById('taskEnd').value=t.end||''; document.getElementById('taskPriority').value=t.priority||'medium'; document.getElementById('taskCategory').value=t.category||'学习'; document.getElementById('taskNote').value=t.note||''; } }
+            else { document.getElementById('taskName').value=''; const now=new Date(); now.setMinutes(0,0,0); now.setHours(now.getHours()+1); document.getElementById('taskStart').value=formatDateTime(now); document.getElementById('taskEnd').value=''; document.getElementById('taskPriority').value='medium'; document.getElementById('taskCategory').value='学习'; document.getElementById('taskNote').value=''; }
+            openModal('taskModal');
+        }
+        function saveTask() {
+            const name = document.getElementById('taskName').value.trim();
+            if (!name) { showToast('请输入任务名称','error'); return; }
+            const id = document.getElementById('taskId').value;
+            const tasks = DB.get('tasks');
+            const data = { id: id||uid(), name, start: document.getElementById('taskStart').value, end: document.getElementById('taskEnd').value, priority: document.getElementById('taskPriority').value, category: document.getElementById('taskCategory').value, note: document.getElementById('taskNote').value, done: false, createdAt: new Date().toISOString() };
+            if (id) { const idx=tasks.findIndex(t=>t.id===id); if(idx>=0){ data.done=tasks[idx].done; data.createdAt=tasks[idx].createdAt; tasks[idx]=data; } } else { tasks.push(data); }
+            DB.set('tasks', tasks); closeModal('taskModal'); renderTasks(); showToast(id?'任务已更新':'任务已添加','success');
+        }
+        function toggleTaskDone(id) { const tasks=DB.get('tasks'); const t=tasks.find(x=>x.id===id); if(t){ t.done=!t.done; DB.set('tasks',tasks); renderTasks(); if(t.done) showToast('任务已完成！','success'); } }
+        function deleteTask(id) { if(!confirm('确定删除？'))return; DB.set('tasks', DB.get('tasks').filter(t=>t.id!==id)); renderTasks(); showToast('任务已删除'); }
+        function renderTasks() {
+            const tasks = DB.get('tasks'); const today = todayStr();
+            const todayTasks = tasks.filter(t => t.start && formatDate(t.start)===today).sort((a,b)=>(a.start||'').localeCompare(b.start||''));
+            const total=todayTasks.length, done=todayTasks.filter(t=>t.done).length, pending=total-done, rate=total>0?Math.round(done/total*100):0;
+            document.getElementById('statTotal').textContent=total; document.getElementById('statDone').textContent=done; document.getElementById('statPending').textContent=pending; document.getElementById('statRate').textContent=rate+'%';
+            const wd=['日','一','二','三','四','五','六']; const now=new Date();
+            document.getElementById('todaySubtitle').textContent=now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日 星期'+wd[now.getDay()];
+            const c=document.getElementById('taskListContainer');
+            if(todayTasks.length===0){ c.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div>今天还没有计划任务</div><div style="margin-top:8px;font-size:13px">点击右上角添加，或在AI命令栏输入"添加任务 XXX"</div></div>'; return; }
+            c.innerHTML='<div class="task-list">'+todayTasks.map(t=>`<div class="task-item ${t.done?'done':''}"><div class="task-check ${t.done?'done':''}" onclick="toggleTaskDone('${t.id}')">${t.done?'✓':''}</div><div class="task-content"><div class="task-name">${escapeHtml(t.name)}</div><div class="task-meta">${t.start?`<span>🕐 ${formatTimeShort(t.start)}</span>`:''} ${t.end?`<span>→ ${formatTimeShort(t.end)}</span>`:''} <span class="priority ${priorityClass(t.priority)}">${priorityLabel(t.priority)}</span> <span>📁 ${escapeHtml(t.category||'其他')}</span> ${t.note?`<span>💬 ${escapeHtml(t.note)}</span>`:''}</div></div><div class="task-actions"><button class="btn btn-ghost btn-sm" onclick="openTaskModal('${t.id}')">编辑</button><button class="btn btn-danger btn-sm" onclick="deleteTask('${t.id}')">删除</button></div></div>`).join('')+'</div>';
+        }
+
+        // ========== 英语单词打卡 ==========
+        function openWordModal() { document.getElementById('wordDate').value=todayStr(); document.getElementById('wordCount').value=''; document.getElementById('wordContent').value=''; document.getElementById('wordNote').value=''; openModal('wordModal'); }
+        function saveWord() {
+            const count=parseInt(document.getElementById('wordCount').value);
+            if(!count||count<=0){showToast('请输入有效单词量','error');return;}
+            const date=document.getElementById('wordDate').value;
+            const records=DB.get('wordRecords'); const idx=records.findIndex(r=>r.date===date);
+            const data={date,count,content:document.getElementById('wordContent').value.trim(),note:document.getElementById('wordNote').value.trim(),createdAt:new Date().toISOString()};
+            if(idx>=0)records[idx]=data; else records.push(data);
+            DB.set('wordRecords',records); closeModal('wordModal'); renderWords(); showToast('打卡成功！'+count+'个单词','success');
+            if(settings.sendKey) sendWechatNotify('单词打卡成功',`今日背诵 ${count} 个单词！\n累计：${records.reduce((s,r)=>s+r.count,0)} 个`);
+        }
+        function deleteWord(date) { if(!confirm('确定删除？'))return; DB.set('wordRecords',DB.get('wordRecords').filter(r=>r.date!==date)); renderWords(); showToast('已删除'); }
+        function calcStreak(records) { if(records.length===0)return 0; const dates=records.map(r=>r.date).sort().reverse(); const today=todayStr(); const yest=formatDate(new Date(Date.now()-86400000)); if(dates[0]!==today&&dates[0]!==yest)return 0; let s=1; for(let i=1;i<dates.length;i++){ if((new Date(dates[i-1])-new Date(dates[i]))/86400000===1)s++; else break; } return s; }
+        function renderWords() {
+            const records=DB.get('wordRecords').sort((a,b)=>b.date.localeCompare(a.date));
+            const total=records.reduce((s,r)=>s+r.count,0); const streak=calcStreak(records); const now=new Date();
+            const monthRec=records.filter(r=>{const d=new Date(r.date);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
+            const avg=records.length>0?Math.round(total/records.length):0;
+            document.getElementById('wordStreak').textContent=streak; document.getElementById('wordTotal').textContent=total; document.getElementById('wordMonth').textContent=monthRec.length; document.getElementById('wordAvg').textContent=avg;
+            // 日历
+            const year=now.getFullYear(), month=now.getMonth(); const firstDay=new Date(year,month,1).getDay(); const daysInMonth=new Date(year,month+1,0).getDate(); const today=now.getDate();
+            const rmap={}; records.forEach(r=>{const d=new Date(r.date);if(d.getMonth()===month&&d.getFullYear()===year)rmap[d.getDate()]=r.count;});
+            let html=''; for(let i=0;i<firstDay;i++)html+='<div class="calendar-day"></div>';
+            for(let d=1;d<=daysInMonth;d++){const c=rmap[d]; html+=`<div class="calendar-day ${c?'checked':''} ${d===today?'today':''}">${d}${c?`<div class="word-count">${c}</div>`:''}</div>`;}
+            document.getElementById('wordCalendar').innerHTML=html;
+            const c=document.getElementById('wordRecords');
+            if(records.length===0){c.innerHTML='<div class="empty"><div class="empty-icon">📖</div><div>还没有打卡记录</div></div>';return;}
+            c.innerHTML=records.slice(0,30).map(r=>`<div class="task-item"><div style="font-size:24px">📖</div><div class="task-content"><div class="task-name">${r.date} · ${r.count} 个单词</div><div class="task-meta">${r.content?`<span>📚 ${escapeHtml(r.content)}</span>`:''} ${r.note?`<span>💬 ${escapeHtml(r.note)}</span>`:''}</div></div><div class="task-actions"><button class="btn btn-danger btn-sm" onclick="deleteWord('${r.date}')">删除</button></div></div>`).join('');
+        }
+
+        // ========== 记账 ==========
+        function openFinanceModal(id) {
+            document.getElementById('financeModalTitle').textContent = id ? '编辑记录' : '记一笔';
+            document.getElementById('financeId').value = id || '';
+            currentFinType = 'expense';
+            setFinType('expense');
+            if (id) { const r = DB.get('finances').find(x=>x.id===id); if(r){ currentFinType=r.type; setFinType(r.type); document.getElementById('financeAmount').value=r.amount; document.getElementById('financeCategory').value=r.category; document.getElementById('financeSource').value=r.source||''; document.getElementById('financeDate').value=r.date; document.getElementById('financeNote').value=r.note||''; } }
+            else { document.getElementById('financeAmount').value=''; document.getElementById('financeCategory').value='餐饮'; document.getElementById('financeSource').value='微信'; document.getElementById('financeDate').value=todayStr(); document.getElementById('financeNote').value=''; }
+            openModal('financeModal');
+        }
+        function setFinType(type) {
+            currentFinType = type;
+            document.getElementById('finTypeBtnExpense').className = 'btn ' + (type==='expense'?'btn-danger':'btn-ghost');
+            document.getElementById('finTypeBtnIncome').className = 'btn ' + (type==='income'?'btn-success':'btn-ghost');
+            document.getElementById('finTypeBtnExpense').style.flex = '1';
+            document.getElementById('finTypeBtnIncome').style.flex = '1';
+            const sel = document.getElementById('financeCategory');
+            if (type === 'income') {
+                document.getElementById('finCategoryLabel').textContent = '收入来源';
+                sel.innerHTML = '<option>生活费</option><option>奖学金</option><option>兼职</option><option>红包</option><option>其他</option>';
+            } else {
+                document.getElementById('finCategoryLabel').textContent = '支出分类';
+                sel.innerHTML = '<option>餐饮</option><option>交通</option><option>购物</option><option>娱乐</option><option>学习</option><option>生活用品</option><option>通讯</option><option>医疗</option><option>其他</option>';
+            }
+        }
+        function saveFinance() {
+            const amount = parseFloat(document.getElementById('financeAmount').value);
+            if (!amount || amount <= 0) { showToast('请输入有效金额','error'); return; }
+            const id = document.getElementById('financeId').value;
+            const records = DB.get('finances');
+            const data = { id: id||uid(), type: currentFinType, amount, category: document.getElementById('financeCategory').value, source: document.getElementById('financeSource').value || '微信', date: document.getElementById('financeDate').value, note: document.getElementById('financeNote').value, createdAt: new Date().toISOString() };
+            if (id) { const idx=records.findIndex(r=>r.id===id); if(idx>=0)records[idx]=data; } else { records.push(data); }
+            DB.set('finances', records); closeModal('financeModal'); renderFinance(); showToast('记录已保存','success');
+        }
+        function deleteFinance(id) { if(!confirm('确定删除？'))return; DB.set('finances',DB.get('finances').filter(r=>r.id!==id)); renderFinance(); showToast('已删除'); }
+        function importWechatBill(event) {
+            const file = event.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let text = e.target.result;
+                    // 微信账单CSV可能有BOM和头部说明行
+                    const lines = text.split(/\r?\n/).filter(l => l.trim());
+                    let imported = 0;
+                    const records = DB.get('finances');
+                    lines.forEach(line => {
+                        // 微信账单格式：交易时间,交易类型,交易对方,商品,金额(元),支付方式,当前状态,交易单号,商户单号,备注
+                        const parts = line.split(',');
+                        if (parts.length >= 5 && /^\d{4}-\d{2}-\d{2}/.test(parts[0].trim())) {
+                            const date = parts[0].trim().split(' ')[0];
+                            let amountStr = parts[4].trim().replace('¥','').replace('￥','');
+                            const amount = parseFloat(amountStr);
+                            if (isNaN(amount)) return;
+                            // 微信账单收入为正，支出为负
+                            const type = amount > 0 ? 'income' : 'expense';
+                            const absAmount = Math.abs(amount);
+                            const merchant = parts[2] ? parts[2].trim() : '';
+                            const goods = parts[3] ? parts[3].trim() : '';
+                            const category = guessCategory(goods + ' ' + merchant);
+                            records.push({ id: uid(), type, amount: absAmount, category, source: '微信', date, note: (goods || merchant).slice(0,50), createdAt: new Date().toISOString() });
+                            imported++;
+                        }
+                    });
+                    DB.set('finances', records);
+                    renderFinance();
+                    showToast('成功导入 ' + imported + ' 条微信账单记录', 'success');
+                } catch(err) { showToast('导入失败：' + err.message, 'error'); }
+            };
+            reader.readAsText(file, 'UTF-8');
+            event.target.value = '';
+        }
+        function guessCategory(text) {
+            if (/(餐|饭|食|吃|面|米|茶|咖啡|奶茶|外卖|美团|饿了么|麦当劳|肯德基|火锅)/.test(text)) return '餐饮';
+            if (/(车|地铁|公交|打车|滴滴|出租|高铁|火车|飞机|共享单车)/.test(text)) return '交通';
+            if (/(淘宝|京东|拼多多|天猫|超市|商店|服装|鞋|包)/.test(text)) return '购物';
+            if (/(电影|游戏|KTV|娱乐|旅游|门票)/.test(text)) return '娱乐';
+            if (/(书|文具|课程|培训|学习|教育)/.test(text)) return '学习';
+            if (/(话费|流量|宽带|联通|移动|电信)/.test(text)) return '通讯';
+            if (/(药|医院|诊所|医疗)/.test(text)) return '医疗';
+            return '其他';
+        }
+        function renderFinance() {
+            const records = DB.get('finances').sort((a,b)=>b.date.localeCompare(a.date));
+            const now = new Date();
+            const monthRecords = records.filter(r => { const d=new Date(r.date); return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear(); });
+            const expense = monthRecords.filter(r=>r.type==='expense').reduce((s,r)=>s+r.amount,0);
+            const income = monthRecords.filter(r=>r.type==='income').reduce((s,r)=>s+r.amount,0);
+            const balance = income - expense;
+            const daily = monthRecords.filter(r=>r.type==='expense').length > 0 ? (expense / now.getDate()).toFixed(1) : 0;
+            document.getElementById('finExpense').textContent = '¥' + expense.toFixed(1);
+            document.getElementById('finIncome').textContent = '¥' + income.toFixed(1);
+            document.getElementById('finBalance').textContent = '¥' + balance.toFixed(1);
+            document.getElementById('finDaily').textContent = '¥' + daily;
+            // 分类统计
+            const catMap = {};
+            monthRecords.filter(r=>r.type==='expense').forEach(r => { catMap[r.category] = (catMap[r.category]||0) + r.amount; });
+            const catEntries = Object.entries(catMap).sort((a,b)=>b[1]-a[1]);
+            const catColors = ['#5B6FED','#E74C3C','#F39C12','#27AE60','#9B59B6','#1ABC9C','#E67E22','#95A5A6','#34495E'];
+            const chartEl = document.getElementById('financeCategoryChart');
+            if (catEntries.length === 0) { chartEl.innerHTML = '<div class="empty" style="padding:20px">本月暂无支出记录</div>'; }
+            else {
+                const total = catEntries.reduce((s,[,v])=>s+v,0);
+                let bar = '<div class="category-bar">';
+                catEntries.forEach(([cat,val],i) => { bar += `<div class="category-seg" style="width:${val/total*100}%;background:${catColors[i%catColors.length]}" title="${cat}: ¥${val.toFixed(1)}"></div>`; });
+                bar += '</div>';
+                let legend = '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">';
+                catEntries.forEach(([cat,val],i) => { legend += `<div style="display:flex;align-items:center;gap:4px;font-size:12px"><span style="width:10px;height:10px;border-radius:2px;background:${catColors[i%catColors.length]}"></span>${escapeHtml(cat)} ¥${val.toFixed(1)} (${(val/total*100).toFixed(0)}%)</div>`; });
+                legend += '</div>';
+                chartEl.innerHTML = bar + legend;
+            }
+            // 记录列表
+            const c = document.getElementById('financeRecords');
+            if (records.length === 0) { c.innerHTML = '<div class="empty"><div class="empty-icon">💰</div><div>还没有记账记录</div><div style="margin-top:8px;font-size:13px">可手动记账或导入微信账单CSV</div></div>'; return; }
+            const catIcons = { '餐饮':'🍴','交通':'🚌','购物':'🛍️','娱乐':'🎮','学习':'📖','生活用品':'🏠','通讯':'📱','医疗':'💊','其他':'💸','生活费':'💰','奖学金':'🏆','兼职':'💼','红包':'🧧' };
+            c.innerHTML = records.slice(0,50).map(r => `<div class="finance-record"><div class="finance-icon ${r.type}">${catIcons[r.category]||(r.type==='expense'?'💸':'💰')}</div><div class="finance-info"><div class="finance-category">${escapeHtml(r.category)} ${r.note?'· '+escapeHtml(r.note):''}</div><div class="finance-meta">${r.date} · ${escapeHtml(r.source)}</div></div><div class="finance-amount ${r.type}">${r.type==='expense'?'-':'+'}¥${r.amount.toFixed(1)}</div><button class="btn btn-danger btn-sm" onclick="deleteFinance('${r.id}')" style="margin-left:8px">删除</button></div>`).join('');
+        }
+
+        // ========== 每日穿搭 ==========
+        function openClothingModal() {
+            document.getElementById('clothingId').value = '';
+            document.getElementById('clothingImage').value = '';
+            document.getElementById('clothingPreview').style.display = 'none';
+            document.getElementById('clothingName').value = '';
+            document.getElementById('clothingCategory').value = 'top';
+            document.getElementById('clothingTemp').value = 'all';
+            openModal('clothingModal');
+        }
+        function previewClothing(event) {
+            const file = event.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => { document.getElementById('clothingPreviewImg').src = e.target.result; document.getElementById('clothingPreview').style.display = 'block'; document.getElementById('clothingPreviewImg').dataset.src = e.target.result; };
+            reader.readAsDataURL(file);
+        }
+        function saveClothing() {
+            const name = document.getElementById('clothingName').value.trim();
+            if (!name) { showToast('请输入衣物名称','error'); return; }
+            const items = DB.get('clothing');
+            const img = document.getElementById('clothingPreviewImg').dataset.src || '';
+            items.push({ id: uid(), name, category: document.getElementById('clothingCategory').value, temp: document.getElementById('clothingTemp').value, image: img, createdAt: new Date().toISOString() });
+            DB.set('clothing', items); closeModal('clothingModal'); renderClothing(); showToast('衣物已添加','success');
+        }
+        function deleteClothing(id) { if(!confirm('确定删除？'))return; DB.set('clothing',DB.get('clothing').filter(c=>c.id!==id)); renderClothing(); showToast('已删除'); }
+        function filterClothing(cat) { clothingFilter = cat; document.querySelectorAll('.paper-tag').forEach(t=>{t.style.background='';t.style.color='';}); const el=document.getElementById('catFilter-'+cat); if(el){el.style.background='var(--primary)';el.style.color='#fff';} renderClothing(); }
+        function renderClothing() {
+            const items = DB.get('clothing');
+            const catNames = { top:'上衣', outer:'外套', bottom:'裤子', shoes:'鞋子', accessory:'配饰' };
+            const filtered = clothingFilter==='all' ? items : items.filter(c=>c.category===clothingFilter);
+            const c = document.getElementById('clothingGrid');
+            if (filtered.length === 0) { c.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">👔</div><div>还没有添加衣物</div><div style="margin-top:8px;font-size:13px">上传你的衣服、裤子、鞋子、配饰</div></div>'; return; }
+            c.innerHTML = filtered.map(item => `<div class="clothing-card">${item.image?`<img src="${item.image}">`:'<div style="width:100%;aspect-ratio:1;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:32px">👕</div>'}<button class="clothing-delete" onclick="deleteClothing('${item.id}')">×</button><div class="clothing-info"><div class="clothing-name">${escapeHtml(item.name)}</div><div class="clothing-cat">${catNames[item.category]||item.category}</div></div></div>`).join('');
+        }
+        async function loadWeather() {
+            const city = settings.city || '北京';
+            document.getElementById('weatherCity').textContent = city;
+            try {
+                // geocoding
+                const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=zh`);
+                const geoData = await geoRes.json();
+                if (!geoData.results || geoData.length === 0) { document.getElementById('weatherDesc').textContent = '未找到该城市'; return; }
+                const loc = geoData.results[0];
+                const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`);
+                const wData = await wRes.json();
+                const temp = Math.round(wData.current.temperature_2m);
+                const maxT = Math.round(wData.daily.temperature_2m_max[0]);
+                const minT = Math.round(wData.daily.temperature_2m_min[0]);
+                const desc = weatherCodeToText(wData.current.weather_code);
+                document.getElementById('weatherTemp').textContent = temp + '°';
+                document.getElementById('weatherDesc').textContent = desc + ' · ' + minT + '~' + maxT + '°C';
+                document.getElementById('weatherHint').textContent = getTempHint(temp);
+            } catch(e) { document.getElementById('weatherDesc').textContent = '获取天气失败（需联网）'; }
+        }
+        function weatherCodeToText(code) {
+            const map = {0:'晴',1:'晴',2:'多云',3:'阴',45:'有雾',48:'冻雾',51:'小毛毛雨',53:'毛毛雨',55:'大毛毛雨',61:'小雨',63:'中雨',65:'大雨',71:'小雪',73:'中雪',75:'大雪',80:'阵雨',81:'中阵雨',82:'大阵雨',95:'雷阵雨',96:'雷阵雨伴冰雹',99:'强雷阵雨'};
+            return map[code] || '未知';
+        }
+        function getTempHint(t) {
+            if (t < 0) return '严寒，注意保暖🧣';
+            if (t < 10) return '寒冷，穿厚外套🧥';
+            if (t < 15) return '凉爽，加件外套🧶';
+            if (t < 25) return '舒适，适宜穿着👕';
+            if (t < 30) return '温暖，薄衣即可👗';
+            return '炎热，注意防晒🧢';
+        }
+        function getTempCategory(temp) {
+            if (temp > 25) return ['hot'];
+            if (temp >= 15) return ['hot','warm'];
+            if (temp >= 10) return ['warm','cool'];
+            if (temp >= 0) return ['cool','cold'];
+            return ['cold','verycold'];
+        }
+        function generateOutfit() {
+            const items = DB.get('clothing');
+            if (items.length === 0) { showToast('请先添加衣物','error'); return; }
+            const tempEl = document.getElementById('weatherTemp').textContent;
+            const temp = parseInt(tempEl);
+            if (isNaN(temp)) { showToast('请先获取天气','error'); return; }
+            const validTemps = getTempCategory(temp);
+            // 按分类筛选
+            const cats = ['top','outer','bottom','shoes','accessory'];
+            const selected = {};
+            const history = DB.get('outfitHistory', []);
+            const recentIds = history.slice(-7).flatMap(o => Object.values(o.items || {}));
+
+            cats.forEach(cat => {
+                let pool = items.filter(c => c.category === cat && (c.temp === 'all' || validTemps.includes(c.temp)));
+                if (pool.length === 0) pool = items.filter(c => c.category === cat);
+                if (pool.length === 0) return;
+                // 优先选近期未穿过的
+                let fresh = pool.filter(c => !recentIds.includes(c.id));
+                if (fresh.length > 0) pool = fresh;
+                selected[cat] = pool[Math.floor(Math.random() * pool.length)];
+            });
+
+            const catNames = { top:'上衣', outer:'外套', bottom:'裤子', shoes:'鞋子', accessory:'配饰' };
+            const result = document.getElementById('outfitResult');
+            let html = '';
+            cats.forEach(cat => {
+                if (selected[cat]) {
+                    const item = selected[cat];
+                    html += `<div class="outfit-item">${item.image?`<img src="${item.image}">`:'<div style="width:100%;aspect-ratio:1;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:32px;border-radius:12px;border:2px solid var(--border)">👕</div>'}<div class="outfit-label">${catNames[cat]}：${escapeHtml(item.name)}</div></div>`;
+                }
+            });
+            result.innerHTML = html;
+            document.getElementById('outfitReason').textContent = `当前温度 ${temp}°C，${getTempHint(temp)}。已从衣橱中为你随机搭配${Object.keys(selected).length}件单品，避免近7天重复。`;
+            document.getElementById('outfitResultCard').style.display = 'block';
+
+            // 记录历史
+            const itemIds = {}; Object.entries(selected).forEach(([k,v]) => itemIds[k] = v.id);
+            history.push({ date: todayStr(), items: itemIds, temp });
+            DB.set('outfitHistory', history.slice(-30));
+            showToast('今日穿搭已生成！', 'success');
+        }
+
+        // ========== 课程表（按周管理） ==========
+        function initWeekSelector() {
+            const sel = document.getElementById('weekSelect');
+            const classes = DB.get('classes');
+            const maxWeek = Math.max(20, ...classes.map(c => c.week || 1));
+            let html = '';
+            for (let i = 1; i <= maxWeek; i++) html += `<option value="${i}">${i}</option>`;
+            sel.innerHTML = html;
+            sel.value = currentWeek;
+        }
+        function openClassModal(id) {
+            document.getElementById('classModalTitle').textContent = id ? '编辑课程' : '添加课程';
+            document.getElementById('classId').value = id || '';
+            if (id) { const c = DB.get('classes').find(x=>x.id===id); if(c){ document.getElementById('className').value=c.name; document.getElementById('classWeek').value=c.week||1; document.getElementById('classDay').value=c.day; document.getElementById('classPeriod').value=c.period; document.getElementById('classLocation').value=c.location||''; document.getElementById('classTeacher').value=c.teacher||''; } }
+            else { document.getElementById('className').value=''; document.getElementById('classWeek').value=currentWeek; document.getElementById('classDay').value='1'; document.getElementById('classPeriod').value='1'; document.getElementById('classLocation').value=''; document.getElementById('classTeacher').value=''; }
+            openModal('classModal');
+        }
+        function saveClass() {
+            const name = document.getElementById('className').value.trim();
+            if (!name) { showToast('请输入课程名称','error'); return; }
+            const id = document.getElementById('classId').value;
+            const classes = DB.get('classes');
+            const data = { id: id||uid(), name, week: parseInt(document.getElementById('classWeek').value), day: parseInt(document.getElementById('classDay').value), period: parseInt(document.getElementById('classPeriod').value), location: document.getElementById('classLocation').value.trim(), teacher: document.getElementById('classTeacher').value.trim() };
+            if (id) { const idx=classes.findIndex(c=>c.id===id); if(idx>=0)classes[idx]=data; } else { classes.push(data); }
+            DB.set('classes', classes); closeModal('classModal'); initWeekSelector(); renderSchedule(); showToast(id?'课程已更新':'课程已添加','success');
+        }
+        function deleteClass(id) { if(!confirm('确定删除？'))return; DB.set('classes',DB.get('classes').filter(c=>c.id!==id)); renderSchedule(); showToast('已删除'); }
+        function importSchedule(event) {
+            const file = event.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const lines = e.target.result.split(/\r?\n/).filter(l => l.trim());
+                    const classes = DB.get('classes');
+                    let count = 0;
+                    lines.forEach(line => {
+                        const p = line.split(',');
+                        if (p.length >= 4 && /^\d+$/.test(p[0].trim())) {
+                            classes.push({ id: uid(), name: p[3].trim(), week: parseInt(p[0]), day: parseInt(p[1]), period: parseInt(p[2]), location: p[4] ? p[4].trim() : '', teacher: p[5] ? p[5].trim() : '' });
+                            count++;
+                        }
+                    });
+                    DB.set('classes', classes); initWeekSelector(); renderSchedule();
+                    showToast('导入 ' + count + ' 条课程', 'success');
+                } catch(err) { showToast('导入失败','error'); }
+            };
+            reader.readAsText(file, 'UTF-8');
+            event.target.value = '';
+        }
+        function renderSchedule() {
+            currentWeek = parseInt(document.getElementById('weekSelect').value) || 1;
+            const classes = DB.get('classes').filter(c => (c.week || 1) === currentWeek);
+            const days = ['','周一','周二','周三','周四','周五','周六','周日'];
+            const periods = ['','第1节<br>08:00-09:40','第2节<br>10:00-11:40','第3节<br>14:00-15:40','第4节<br>16:00-17:40','第5节<br>19:00-20:40'];
+            document.getElementById('weekInfo').textContent = `本周共 ${classes.length} 节课`;
+            let html = '<div class="schedule-cell time"></div>';
+            for (let d=1; d<=7; d++) html += `<div class="schedule-header">${days[d]}</div>`;
+            for (let p=1; p<=5; p++) {
+                html += `<div class="schedule-cell time">${periods[p]}</div>`;
+                for (let d=1; d<=7; d++) {
+                    const c = classes.find(x => x.day===d && x.period===p);
+                    if (c) html += `<div class="schedule-cell has-class" onclick="deleteClass('${c.id}')" title="点击删除"><strong>${escapeHtml(c.name)}</strong><br>${c.location?'📍'+escapeHtml(c.location)+'<br>':''}${c.teacher?'👨‍🏫'+escapeHtml(c.teacher):''}</div>`;
+                    else html += '<div class="schedule-cell"></div>';
+                }
+            }
+            document.getElementById('scheduleGrid').innerHTML = html;
+        }
+
+        // ========== 学习计划 ==========
+        function openStudyModal(id) {
+            document.getElementById('studyModalTitle').textContent = id ? '编辑学习计划' : '新建学习计划';
+            document.getElementById('studyId').value = id || '';
+            if (id) { const s = DB.get('studies').find(x=>x.id===id); if(s){ document.getElementById('studyName').value=s.name; document.getElementById('studyDesc').value=s.desc||''; document.getElementById('studyDeadline').value=s.deadline||''; document.getElementById('studyProgress').value=s.progress||0; document.getElementById('studyStatus').value=s.status||'进行中'; } }
+            else { document.getElementById('studyName').value=''; document.getElementById('studyDesc').value=''; document.getElementById('studyDeadline').value=''; document.getElementById('studyProgress').value=0; document.getElementById('studyStatus').value='进行中'; }
+            openModal('studyModal');
+        }
+        function saveStudy() {
+            const name = document.getElementById('studyName').value.trim();
+            if (!name) { showToast('请输入目标名称','error'); return; }
+            const id = document.getElementById('studyId').value;
+            const studies = DB.get('studies');
+            const data = { id: id||uid(), name, desc: document.getElementById('studyDesc').value, deadline: document.getElementById('studyDeadline').value, progress: parseInt(document.getElementById('studyProgress').value)||0, status: document.getElementById('studyStatus').value, createdAt: new Date().toISOString() };
+            if (id) { const idx=studies.findIndex(s=>s.id===id); if(idx>=0){ data.createdAt=studies[idx].createdAt; studies[idx]=data; } } else { studies.push(data); }
+            DB.set('studies', studies); closeModal('studyModal'); renderStudy(); showToast(id?'计划已更新':'计划已创建','success');
+        }
+        function deleteStudy(id) { if(!confirm('确定删除？'))return; DB.set('studies',DB.get('studies').filter(s=>s.id!==id)); renderStudy(); showToast('已删除'); }
+        function updateProgress(id, delta) { const studies=DB.get('studies'); const s=studies.find(x=>x.id===id); if(s){ s.progress=Math.max(0,Math.min(100,(s.progress||0)+delta)); if(s.progress>=100)s.status='已完成'; DB.set('studies',studies); renderStudy(); } }
+        function renderStudy() {
+            const studies = DB.get('studies').sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+            const c = document.getElementById('studyContainer');
+            if (studies.length===0) { c.innerHTML='<div class="empty"><div class="empty-icon">🎯</div><div>还没有学习计划</div></div>'; return; }
+            c.innerHTML = studies.map(s => {
+                const sc = s.status==='已完成'?'var(--success)':s.status==='已暂停'?'var(--text-secondary)':'var(--primary)';
+                const dl = s.deadline ? Math.ceil((new Date(s.deadline)-new Date())/86400000) : null;
+                return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px"><div><div style="font-size:16px;font-weight:600">${escapeHtml(s.name)}</div><div style="font-size:12px;color:${sc};margin-top:4px">● ${escapeHtml(s.status)} ${dl!==null?' · '+(dl>0?'还剩'+dl+'天':dl===0?'今天截止':'已超期'+Math.abs(dl)+'天'):''}</div></div><div style="display:flex;gap:4px"><button class="btn btn-ghost btn-sm" onclick="openStudyModal('${s.id}')">编辑</button><button class="btn btn-danger btn-sm" onclick="deleteStudy('${s.id}')">删除</button></div></div>${s.desc?`<div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;white-space:pre-wrap">${escapeHtml(s.desc)}</div>`:''}<div style="display:flex;align-items:center;gap:12px"><div style="flex:1"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>进度</span><span>${s.progress}%</span></div><div class="progress-bar"><div class="progress-fill" style="width:${s.progress}%"></div></div></div><div style="display:flex;gap:4px"><button class="btn btn-ghost btn-sm" onclick="updateProgress('${s.id}',-5)">-5%</button><button class="btn btn-secondary btn-sm" onclick="updateProgress('${s.id}',5)">+5%</button></div></div></div>`;
+            }).join('');
+        }
+
+        // ========== 读书笔记 ==========
+        function openBookModal(id) {
+            document.getElementById('bookModalTitle').textContent = id ? '编辑书籍' : '添加书籍';
+            document.getElementById('bookId').value = id || '';
+            if (id) { const b = DB.get('books').find(x=>x.id===id); if(b){ document.getElementById('bookTitle').value=b.title; document.getElementById('bookAuthor').value=b.author||''; document.getElementById('bookRating').value=b.rating||0; document.getElementById('bookStart').value=b.start||''; document.getElementById('bookFinish').value=b.finish||''; document.getElementById('bookNote').value=b.note||''; } }
+            else { document.getElementById('bookTitle').value=''; document.getElementById('bookAuthor').value=''; document.getElementById('bookRating').value=0; document.getElementById('bookStart').value=''; document.getElementById('bookFinish').value=''; document.getElementById('bookNote').value=''; }
+            openModal('bookModal');
+        }
+        function saveBook() {
+            const title = document.getElementById('bookTitle').value.trim();
+            if (!title) { showToast('请输入书名','error'); return; }
+            const id = document.getElementById('bookId').value;
+            const books = DB.get('books');
+            const data = { id: id||uid(), title, author: document.getElementById('bookAuthor').value.trim(), rating: parseInt(document.getElementById('bookRating').value), start: document.getElementById('bookStart').value, finish: document.getElementById('bookFinish').value, note: document.getElementById('bookNote').value, createdAt: new Date().toISOString() };
+            if (id) { const idx=books.findIndex(b=>b.id===id); if(idx>=0){ data.createdAt=books[idx].createdAt; books[idx]=data; } } else { books.push(data); }
+            DB.set('books', books); closeModal('bookModal'); renderBooks(); showToast(id?'书籍已更新':'书籍已添加','success');
+        }
+        function deleteBook(id) { if(!confirm('确定删除？'))return; DB.set('books',DB.get('books').filter(b=>b.id!==id)); renderBooks(); showToast('已删除'); }
+        function renderBooks() {
+            const books = DB.get('books').sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+            const c = document.getElementById('bookContainer');
+            if (books.length===0) { c.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📚</div><div>还没有读书笔记</div></div>'; return; }
+            c.innerHTML = books.map(b => `<div class="book-card"><div class="book-actions"><button class="btn btn-ghost btn-sm" onclick="openBookModal('${b.id}')">编辑</button><button class="btn btn-danger btn-sm" onclick="deleteBook('${b.id}')">删除</button></div><div class="book-title">${escapeHtml(b.title)}</div><div class="book-author">${b.author?escapeHtml(b.author):'未知作者'}</div>${b.rating>0?`<div class="book-rating">${'★'.repeat(b.rating)}${'☆'.repeat(5-b.rating)}</div>`:''}<div style="font-size:12px;color:var(--text-secondary)">${b.start?'开始：'+b.start:''} ${b.finish?' · 读完：'+b.finish:''}</div>${b.note?`<div class="book-note">${escapeHtml(b.note)}</div>`:''}</div>`).join('');
+        }
+
+        // ========== 论文阅读 ==========
+        function renderPapers() {
+            // 热门关键词
+            const tags = ['React','Vue','Angular','WebAssembly','TypeScript','CSS Grid','WebGL','PWA','微前端','SSR','GraphQL','Web3','前端工程化','性能优化','Accessibility','Web Components','Service Worker','WebRTC','Three.js','Vite'];
+            document.getElementById('paperTags').innerHTML = tags.map(t => `<span class="paper-tag" onclick="document.getElementById('paperSearchInput').value='${t}';searchPapers()">${t}</span>`).join('');
+
+            // 搜索源
+            const sources = [
+                { icon:'📄', name:'arXiv', desc:'计算机科学前沿论文', url:'https://arxiv.org/search/?query=KEYWORD&searchtype=all&start=0' },
+                { icon:'🎓', name:'Google Scholar', desc:'谷歌学术搜索', url:'https://scholar.google.com/scholar?q=KEYWORD' },
+                { icon:'📚', name:'知网', desc:'中国知网学术搜索', url:'https://kns.cnki.net/kns8/defaultresult/index?kw=KEYWORD' },
+                { icon:'🔍', name:'DBLP', desc:'计算机科学文献库', url:'https://dblp.org/search?q=KEYWORD' },
+                { icon:'🌐', name:'Semantic Scholar', desc:'AI驱动的论文搜索', url:'https://www.semanticscholar.org/search?q=KEYWORD' },
+                { icon:'💡', name:'MDN Web Docs', desc:'Web技术文档（非论文但实用）', url:'https://developer.mozilla.org/zh-CN/search?q=KEYWORD' }
+            ];
+            document.getElementById('paperSources').innerHTML = sources.map(s => `<div class="paper-source-card" onclick="openPaperSource('${s.url}')"><div class="paper-source-icon">${s.icon}</div><div class="paper-source-name">${s.name}</div><div class="paper-source-desc">${s.desc}</div></div>`).join('');
+
+            // 推荐方向
+            const topics = [
+                { title:'前端框架原理', keywords:'React Vue Angular' },
+                { title:'Web 性能优化', keywords:'web performance optimization' },
+                { title:'WebAssembly', keywords:'WebAssembly browser' },
+                { title:'微前端架构', keywords:'micro frontend' },
+                { title:'TypeScript 类型系统', keywords:'TypeScript type system' },
+                { title:'CSS 新特性', keywords:'CSS grid container query' },
+                { title:'Web 图形渲染', keywords:'WebGL Three.js rendering' },
+                { title:'PWA 与离线应用', keywords:'PWA service worker offline' }
+            ];
+            document.getElementById('paperTopics').innerHTML = topics.map(t => `<div style="margin-bottom:12px;padding:12px;background:var(--bg);border-radius:8px"><div style="font-weight:600;margin-bottom:4px">${t.title}</div><div style="font-size:12px;color:var(--text-secondary)">关键词：${t.keywords}</div><button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="document.getElementById('paperSearchInput').value='${t.keywords}';searchPapers()">搜索此方向</button></div>`).join('');
+        }
+        function searchPapers() {
+            const q = document.getElementById('paperSearchInput').value.trim();
+            if (!q) { showToast('请输入搜索关键词','error'); return; }
+            // 默认用 Semantic Scholar 搜索（AI驱动）
+            window.open('https://www.semanticscholar.org/search?q=' + encodeURIComponent(q), '_blank');
+            showToast('正在搜索论文：' + q);
+        }
+        function openPaperSource(urlTemplate) {
+            const q = document.getElementById('paperSearchInput').value.trim() || '前端 frontend';
+            window.open(urlTemplate.replace('KEYWORD', encodeURIComponent(q)), '_blank');
+        }
+
+        // ========== 设置 ==========
+        function renderSettings() {
+            document.getElementById('sendKeyInput').value = settings.sendKey || '';
+            document.getElementById('cityInput').value = settings.city || '';
+            document.getElementById('settingTaskRemind').checked = settings.taskRemind !== false;
+            document.getElementById('settingWordRemind').checked = settings.wordRemind !== false;
+            updateNotifyStatus();
+        }
+        function saveSendKey() { settings.sendKey = document.getElementById('sendKeyInput').value.trim(); DB.set('settings', settings); updateNotifyStatus(); showToast('SendKey 已保存','success'); }
+        function saveCity() { settings.city = document.getElementById('cityInput').value.trim(); DB.set('settings', settings); showToast('城市已保存','success'); loadWeather(); }
+        function saveSettings() { settings.taskRemind = document.getElementById('settingTaskRemind').checked; settings.wordRemind = document.getElementById('settingWordRemind').checked; DB.set('settings', settings); showToast('设置已保存','success'); }
+        function updateNotifyStatus() { const dot=document.getElementById('notifyDot'); const s=document.getElementById('notifyStatus'); if(settings.sendKey){dot.classList.add('active');s.textContent='微信通知已连接';}else{dot.classList.remove('active');s.textContent='微信通知未连接';} }
+        async function testNotify() { if(!settings.sendKey){showToast('请先填写 SendKey','error');return;} showToast('正在发送测试...'); const ok=await sendWechatNotify('工作台测试通知','恭喜！微信通知配置成功。'); if(ok)showToast('测试消息已发送','success'); else showToast('发送失败，请检查 SendKey','error'); }
+
+        async function sendWechatNotify(title, desp) {
+            if (!settings.sendKey) return false;
+            try { const res = await fetch('https://sctapi.ftqq.com/'+settings.sendKey+'.send', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'title='+encodeURIComponent(title)+'&desp='+encodeURIComponent(desp) }); const data = await res.json(); return data.code===0; } catch(e) { return false; }
+        }
+
+        // ========== 数据导入导出 ==========
+        function exportData() {
+            const data = { tasks:DB.get('tasks'), wordRecords:DB.get('wordRecords'), finances:DB.get('finances'), clothing:DB.get('clothing'), classes:DB.get('classes'), studies:DB.get('studies'), books:DB.get('books'), outfitHistory:DB.get('outfitHistory',[]), settings:DB.get('settings',{}), exportDate:new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+            const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='工作台备份_'+todayStr()+'.json'; a.click(); showToast('数据已导出','success');
+        }
+        function importData(event) {
+            const file = event.target.files[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                try { const data = JSON.parse(e.target.result);
+                    if(data.tasks)DB.set('tasks',data.tasks); if(data.wordRecords)DB.set('wordRecords',data.wordRecords); if(data.finances)DB.set('finances',data.finances); if(data.clothing)DB.set('clothing',data.clothing); if(data.classes)DB.set('classes',data.classes); if(data.studies)DB.set('studies',data.studies); if(data.books)DB.set('books',data.books); if(data.outfitHistory)DB.set('outfitHistory',data.outfitHistory); if(data.settings){settings=Object.assign(settings,data.settings);DB.set('settings',settings);}
+                    renderSettings(); switchPage('today'); showToast('数据导入成功','success');
+                } catch(err) { showToast('导入失败','error'); }
+            };
+            reader.readAsText(file); event.target.value='';
+        }
+        function clearAllData() {
+            if(!confirm('⚠️ 确定清空所有数据？此操作不可恢复！'))return;
+            if(!confirm('再次确认：真的要清空所有数据吗？'))return;
+            ['tasks','wordRecords','finances','clothing','classes','studies','books','outfitHistory'].forEach(k=>DB.set(k,[]));
+            renderTasks(); showToast('所有数据已清空','success');
+        }
+
+        // ========== 时钟 ==========
+        function updateClock() { const now=new Date(); const wd=['星期日','星期一','星期二','星期三','星期四','星期五','星期六']; document.getElementById('currentTime').textContent=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0'); document.getElementById('currentDateText').textContent=now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日 '+wd[now.getDay()]; }
+
+        // ========== 提醒检查 ==========
+        let remindedTasks = new Set();
+        function checkTaskReminders() {
+            if(!settings.sendKey||settings.taskRemind===false)return;
+            DB.get('tasks').forEach(t => { if(t.done||!t.start)return; const diff=new Date(t.start).getTime()-Date.now(); if(diff>240000&&diff<360000&&!remindedTasks.has(t.id)){ remindedTasks.add(t.id); sendWechatNotify('⏰ 任务即将开始',`**${t.name}**\n开始时间：${formatTimeShort(t.start)}\n优先级：${priorityLabel(t.priority)}`); } });
+        }
+        let lastWordRemind = '';
+        function checkWordReminder() {
+            if(!settings.sendKey||settings.wordRemind===false)return;
+            const now=new Date(); const today=todayStr();
+            if(now.getHours()===21&&now.getMinutes()<5&&lastWordRemind!==today){ if(!DB.get('wordRecords').some(r=>r.date===today)){ lastWordRemind=today; sendWechatNotify('📖 单词打卡提醒','今天还没有打卡哦！'); } }
+        }
+
+        // ========== 初始化 ==========
+        function init() {
+            const now=new Date(); const wd=['日','一','二','三','四','五','六'];
+            document.getElementById('todayDate').textContent=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')+' 周'+wd[now.getDay()];
+            updateClock(); setInterval(updateClock,1000);
+            initWeekSelector();
+            if(DB.get('tasks').length===0&&!localStorage.getItem('lzh_wb_init')){ const now2=new Date(); now2.setHours(9,0,0,0); DB.set('tasks',[{id:uid(),name:'欢迎使用工作台！在顶部AI命令栏试试输入"添加任务 复习高数"',start:formatDateTime(now2),end:'',priority:'high',category:'其他',note:'',done:false,createdAt:new Date().toISOString()}]); localStorage.setItem('lzh_wb_init','1'); }
+            renderTasks(); updateNotifyStatus();
+            setInterval(checkTaskReminders,60000); setInterval(checkWordReminder,60000);
+            document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('active');}));
+        }
+
+        // 注册 Service Worker
+        if('serviceWorker' in navigator){ window.addEventListener('load',()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
+        init();
+    </script>
+</body>
+</html>
